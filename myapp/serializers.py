@@ -62,7 +62,6 @@ class SponsorToStudentSerializer(serializers.ModelSerializer):
 
         
         sponsor_id.spend_summa += summa
-        sponsor_id.sponsor_summa -= summa
         sponsor_id.save()
 
         student_id.allocated_summa += summa
