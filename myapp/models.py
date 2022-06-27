@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.db.models import Sum
 
 
 class Sponsor(models.Model):
@@ -17,15 +17,21 @@ class Sponsor(models.Model):
     full_name = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=13, unique=True)
     sponsor_summa = models.DecimalField(max_digits=20, decimal_places=2, default=0)
-    spend_summa = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     company = models.CharField(max_length=255, null=True, blank=True)
     created = models.DateField(auto_now_add=True)
     updated = models.DateField(auto_now=True)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.NEW)
 
     @property
+    def spend_summa(self):
+        result = SponsorToStudent.objects.filter(sponsor__id = self.id).aggregate(summa = Sum('summa'))['summa']
+        return result
+
+    @property
     def summa_mod(self):
-        return self.sponsor_summa - self.spend_summa
+        if self.spend_summa:
+            return self.sponsor_summa - self.spend_summa
+        return self.sponsor_summa
 
     def __str__(self) -> str:
         return self.full_name
@@ -49,12 +55,18 @@ class Student(models.Model):
     otm = models.ForeignKey(OTM, on_delete=models.CASCADE)
     created = models.DateField(auto_now_add=True)
     updated = models.DateField(auto_now=True)
-    allocated_summa = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     kontrakt_summa = models.DecimalField(max_digits=20, decimal_places=2, default=0)
 
     @property
+    def allocated_summa(self):
+        result = SponsorToStudent.objects.filter(student__id = self.id).aggregate(summa = Sum('summa'))['summa']
+        return result
+    
+    @property
     def summa_mod(self):
-        return self.kontrakt_summa - self.allocated_summa
+        if self.allocated_summa:
+            return self.kontrakt_summa - self.allocated_summa
+        return self.kontrakt_summa
 
     def __str__(self) -> str:
         return self.full_name

@@ -60,13 +60,6 @@ class SponsorToStudentSerializer(serializers.ModelSerializer):
         if student_id.summa_mod < summa:
             raise serializers.ValidationError(f'{student_id.full_name} ga {student_id.summa_mod} shuncha pul yetarli. siz esa {summa} shuncha kirityapsiz')
 
-        
-        sponsor_id.spend_summa += summa
-        sponsor_id.save()
-
-        student_id.allocated_summa += summa
-        student_id.save()
-
         return attrs
     
     def create(self, validated_data):
@@ -74,10 +67,17 @@ class SponsorToStudentSerializer(serializers.ModelSerializer):
         sponsor_id = validated_data.get('sponsor')
         summa = validated_data.get('summa')
         ss = SponsorToStudent.objects.filter(student=student_id, sponsor=sponsor_id).first()
-        print(ss)
         if ss is not None:
             ss.summa += summa
             ss.save()
             return validated_data
         return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        summa = validated_data.get('summa')
+        sponsor = validated_data.get('sponsor')
+        instance.sponsor = sponsor
+        instance.summa = summa
+        instance.save()
+        return super().update(instance, validated_data)
     
